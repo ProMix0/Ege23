@@ -1,17 +1,18 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Ege23
 {
     class Program
     {
         static void Main(string[] args)
-        {            
-            Console.WriteLine(VariantsCount(1,10, new()
+        {
+            Console.WriteLine(VariantsCount(1, 20, new()
             {
                 a => a + 1,
                 a => a * 3
-            }));
+            })/*.Include(10)*/);
         }
 
         public static VariantsResult VariantsCount(int start, int stop, List<Rule> rules)
@@ -27,28 +28,41 @@ namespace Ege23
             private Dictionary<int, int> table;
 
             private int result;
-            private bool haveResult=false;
+            private bool haveResult = false;
 
             internal VariantsResult(int start, int stop, List<Rule> rules)
             {
                 this.start = start;
                 this.stop = stop;
                 this.rules = rules;
+
+                include = new() { start, stop };
+                exclude = new();
+
                 table = new();
+                for (int i = start; i <= stop; i++)
+                {
+                    table.Add(i, 0);
+                }
+                table[start] = 1;
             }
 
             #region extensions
 
-            private List<int> include = new(), exclude = new();
+            private List<int> include, exclude;
 
             public VariantsResult Include(List<int> include)
             {
-                this.include.AddRange(include);
+                foreach (var i in include)
+                    Include(i);
 
                 return this;
             }
             public VariantsResult Include(int include)
             {
+                if (!table.ContainsKey(include))
+                    throw new ArgumentOutOfRangeException(nameof(include));
+
                 this.include.Add(include);
 
                 return this;
@@ -56,12 +70,16 @@ namespace Ege23
 
             public VariantsResult Exclude(List<int> exclude)
             {
-                this.exclude.AddRange(exclude);
+                foreach (var i in exclude)
+                    Exclude(i);
 
                 return this;
             }
             public VariantsResult Exclude(int exclude)
             {
+                if (!table.ContainsKey(exclude))
+                    throw new ArgumentOutOfRangeException(nameof(exclude));
+
                 this.exclude.Add(exclude);
 
                 return this;
@@ -78,20 +96,16 @@ namespace Ege23
             {
                 if (!haveResult)
                 {
-                    for (int i = start; i <= stop; i++)
-                    {
-                        table.Add(i, 0);
-                    }
-                    table[start] = 1;
+                    include.Sort();
+                    foreach (var i in exclude.Distinct())
+                        table.Remove(i);
 
-                    for (int i = start; i <= stop; i++)
+                    int? previous = null;
+                    foreach (var i in include)
                     {
-                        foreach (var rule in rules)
-                        {
-                            int number = rule(i);
-                            if (table.ContainsKey(number))
-                                table[number] += table[i];
-                        }
+                        if (previous != null)
+                            SubResult(previous.Value, i);
+                        previous = i;
                     }
                 }
 
@@ -100,14 +114,31 @@ namespace Ege23
 
                 table = null;
                 rules = null;
+                include = null;
+                exclude = null;
 
                 return result;
             }
 
-            public override string ToString()
+            private void SubResult(int start, int stop)
+            {
+                if (start == stop) return;
+
+                for (int i = start; i <= stop; i++)
+                {
+                    foreach (var rule in rules)
+                    {
+                        int number = rule(i);
+                        if (table.ContainsKey(number))
+                            table[number] += table[i];
+                    }
+                }
+            }
+
+            /*public override string ToString()
             {
                 return Result().ToString();
-            }
+            }*/
         }
 
         public delegate int Rule(int input);
