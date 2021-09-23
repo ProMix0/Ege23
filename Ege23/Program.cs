@@ -26,6 +26,9 @@ namespace Ege23
             private readonly List<Rule> rules;
             private readonly Dictionary<int, int> table;
 
+            private int result;
+            private bool haveResult=false;
+
             internal VariantsResult(int start, int stop, List<Rule> rules)
             {
                 this.start = start;
@@ -35,26 +38,40 @@ namespace Ege23
             }
 
 
-            public static explicit operator int(VariantsResult param)
-            {
-                Dictionary<int, int> table = new();
-                for (int i = param.start; i <= param.stop; i++)
-                {
-                    table.Add(i, 0);
-                }
-                table[param.start] = 1;
+            public static explicit operator int(VariantsResult param) => param.Result();
 
-                for (int i = param.start; i <= param.stop; i++)
+            //public static implicit operator int(VariantsResult param)=>param.ToInt();
+
+            private int Result()
+            {
+                if (!haveResult)
                 {
-                    foreach (var rule in param.rules)
+                    for (int i = start; i <= stop; i++)
                     {
-                        int number = rule(i);
-                        if (table.ContainsKey(number))
-                            table[number] += table[i];
+                        table.Add(i, 0);
+                    }
+                    table[start] = 1;
+
+                    for (int i = start; i <= stop; i++)
+                    {
+                        foreach (var rule in rules)
+                        {
+                            int number = rule(i);
+                            if (table.ContainsKey(number))
+                                table[number] += table[i];
+                        }
                     }
                 }
 
-                return param.table[param.stop];
+                result = table[stop];
+                haveResult = true;
+
+                return result;
+            }
+
+            public override string ToString()
+            {
+                return Result().ToString();
             }
         }
 
