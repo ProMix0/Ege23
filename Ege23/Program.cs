@@ -23,8 +23,8 @@ namespace Ege23
         {
             private readonly int start;
             private readonly int stop;
-            private readonly List<Rule> rules;
-            private readonly Dictionary<int, int> table;
+            private List<Rule> rules;
+            private Dictionary<int, int> table;
 
             private int result;
             private bool haveResult=false;
@@ -36,6 +36,38 @@ namespace Ege23
                 this.rules = rules;
                 table = new();
             }
+
+            #region extensions
+
+            private List<int> include = new(), exclude = new();
+
+            public VariantsResult Include(List<int> include)
+            {
+                this.include.AddRange(include);
+
+                return this;
+            }
+            public VariantsResult Include(int include)
+            {
+                this.include.Add(include);
+
+                return this;
+            }
+
+            public VariantsResult Exclude(List<int> exclude)
+            {
+                this.exclude.AddRange(exclude);
+
+                return this;
+            }
+            public VariantsResult Exclude(int exclude)
+            {
+                this.exclude.Add(exclude);
+
+                return this;
+            }
+
+            #endregion
 
 
             public static explicit operator int(VariantsResult param) => param.Result();
@@ -65,6 +97,9 @@ namespace Ege23
 
                 result = table[stop];
                 haveResult = true;
+
+                table = null;
+                rules = null;
 
                 return result;
             }
