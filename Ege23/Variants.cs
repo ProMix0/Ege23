@@ -9,7 +9,7 @@ namespace Ege23
     /// <summary>
     /// Класс для решения 23 задания ЕГЭ
     /// </summary>
-    public class Variants
+    public class Variants:IDisposable
     {
         private readonly int start;
         private readonly int stop;
@@ -19,15 +19,19 @@ namespace Ege23
         private int result;
         private bool haveResult = false;
 
+        private List<int> include, exclude;
+
         private Variants(int start, int stop, List<Rule> rules)
         {
             this.start = start;
             this.stop = stop;
             this.rules = rules;
 
+            // Инициализация списков включения и выключения стартовым и конечным значением
             include = new() { start, stop };
             exclude = new();
 
+            // Заполнение таблицы
             table = new();
             for (int i = start; i <= stop; i++)
             {
@@ -37,8 +41,6 @@ namespace Ege23
         }
 
         #region extensions
-
-        private List<int> include, exclude;
 
         /// <summary>
         /// Функция, задающая траекторию
@@ -127,10 +129,12 @@ namespace Ege23
         {
             if (!haveResult)
             {
+                // Подготовка списков
                 include.Sort();
                 foreach (var i in exclude.Distinct())
                     table.Remove(i);
 
+                // Расчёт по промежуткам
                 int? previous = null;
                 foreach (var i in include)
                 {
@@ -138,15 +142,10 @@ namespace Ege23
                         SubResult(previous.Value, i);
                     previous = i;
                 }
+
+                result = table[stop];
+                haveResult = true;
             }
-
-            result = table[stop];
-            haveResult = true;
-
-            table = null;
-            rules = null;
-            include = null;
-            exclude = null;
 
             return result;
         }
@@ -165,6 +164,7 @@ namespace Ege23
                 if (!table.ContainsKey(i)) continue;
                 foreach (var rule in rules)
                 {
+                    // Добавление вариантов в ячейку, вычисляемую по правилу
                     int number = rule(i);
                     if (table.ContainsKey(number) && (number <= start || number <= stop))
                         table[number] += table[i];
@@ -196,5 +196,12 @@ namespace Ege23
             return new(start, stop, rules);
         }
 
+        public void Dispose()
+        {
+            table = null;
+            rules = null;
+            include = null;
+            exclude = null;
+        }
     }
 }
