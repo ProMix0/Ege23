@@ -9,7 +9,7 @@ namespace Ege23
     /// <summary>
     /// Класс для решения 23 задания ЕГЭ
     /// </summary>
-    public class Variants:IDisposable
+    public class Variants : IDisposable
     {
         private readonly int start;
         private readonly int stop;
@@ -166,16 +166,16 @@ namespace Ege23
                 {
                     // Добавление вариантов в ячейку, вычисляемую по правилу
                     int number = rule(i);
-                    if (table.ContainsKey(number) && (number <= start || number <= stop))
+                    if (number <= stop && number != i && table.ContainsKey(number))
                         table[number] += table[i];
                 }
             }
         }
 
-        public override string ToString()
+        /*public override string ToString()
         {
             return Result().ToString();
-        }
+        }*/
 
         /// <summary>
         /// Делегат, представляющий команды исполнителя
